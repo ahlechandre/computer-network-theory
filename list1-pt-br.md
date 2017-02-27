@@ -54,7 +54,7 @@ Um servidor de correio é uma aplicação de rede utilizada para armazenar e adm
 
 ## 10. Com funciona o protocolo SMTP, para que um e-mail enviado de uma fonte chegue até seu destino
 
-Para descrever como um e-mail enviado de uma fonte chega até o seu destino, vamos utilizar uma sequência de passos:
+Para descrever como um e-mail enviado de uma fonte chega até o seu destino, vamos utilizar a seguinte sequência de passos:
 
 1. O usuário 1 deseja enviar um e-mail para o usuário 2. Para isso, ele utiliza um agente de usuário de preferência para compor sua menagem de correio e encaminhá-la utilizando majoritariamente o protocolo SMTP. A mensagem SMTP contendo os dados do remetente, destinatário e corpo da mensagem de correio deve ser direcionada primeiramente para o servidor de correio remetente, do usuário 1. Assim, o agente de usuário remetente estabelece uma conexão TCP com o seu servidor de correio e realiza a troca de dados.
 
@@ -67,3 +67,80 @@ Para descrever como um e-mail enviado de uma fonte chega até o seu destino, vam
 O POP3 é um protocolo de camada de aplicação utilizado por agentes de usuário para acessar mensagens de correio disponíveis no servidor de correio. Para isso, o agente de usuário estabelece uma conexão TCP com o servidor de correio e inicia a troca de dados. Uma sessão POP3 é dividida em 3 partes: autorização, transação e atualização. Na primeira fase, o agente de usuário envia os dados de identificação e senha do usuário. Na segunda fase, o agente de usuário recupera as mensagens e pode marcar aquelas que devem ser apagadas. Na última fase, o agente de usuário envia o comando `quit` para encerrar a sessão e o servidor de correio pode remover as mensagens marcadas.
 
 O IMAP, assim como o POP3, é um protocolo de camada de aplicação utilizado por agentes de usuários para acessar mensagens disponíveis no servidor de correio. O IMAP é caracterizado por ser mais complexo e, consequentemente, conter mais recursos que o POP3. Diferentemente do POP3, o IMAP possibilita a criação e alocamento de mensagens de correio em pastas no servidor. Outro recurso adicional é a possibilidade de recuperação de componentes de mensagens, tais como cabeçalho, remetente ou parte do corpo da mensagem.
+
+## 12. Como funciona uma consulta a um servidor DNS? Descreva utilizando como é feita a interação entre servidores TLDs e servidores raízes.
+
+Para descrever uma consulta a um servidor DNS, vamos utilizar a seguinte sequência de passos:
+
+1. Suponha que um usuário cliente deseja acessar o website `github.com`. Para isso, ele utiliza um cliente HTTP (browser Web) para montar a requisição com destino a esse nome de hospedeiro. Como os protocolos subjacentes da pilha de camadas não trabalham com nomes de hospedeiros, a camada de aplicação precisa traduzir este para o endereço IP do hospedeiro servidor.
+
+2. Para realizar essa tradução, a camada de aplicação utiliza o sistema de nomes de domínio (DNS). Toda consulta DNS utiliza o UDP como protocolo de transporte. Assim, o cliente DNS do usuário estabelece uma conexão UDP com o servidor DNS local requisitando o endereço IP do hospedeiro servidor de `github.com`.
+
+3. O servidor DNS local, por sua vez, contata um dos servidores DNS raízes. O servidor raiz contactado responderá com um segmento UDP contendo o endereço de um servidor DNS TLD (*top-level domain*) responsável pelo domínio `.com`.
+
+3. Após receber o endereço do servidor DNS TLD, o servidor de nomes local solicita a ele o endereço de um servidor DNS que responde por `github.com`. Logo, o servidor de nomes local recebe o endereço do servidor de nomes com autoridade desejado.
+
+4. Por último, o servidor de nomes local estabelece uma conexão UDP com o servidor de nomes com autoridade solicitando o endereço IP referente a `github.com`. 
+
+5. Quando recebe o endereço IP, o servidor de nomes local o repassa para o cliente DNS do usuário. Agora, o hospedeiro cliente está pronto para continuar com o procedimento de conexão e troca de mensagens com o hospedeiro servidor de `github.com`.
+
+## 13. Descreva como é realizada a consulta repetida (iterativa) e a consulta recursiva.
+
+A consulta repetida (ou iterativa) acontece quando um servidor de nomes estabelece uma sequência de conexões com diferentes servidores DNS em busca da tradução de um nome de hospedeiro. Por exemplo, o servidor de nomes local contacta um servidor DNS raiz, depois um servidor de nomes TLD e, por último, um servidor DNS com autoridade. Assim, o servidor DNS com autoridade responde ao servidor DNS local o endereço IP desejado.
+
+A consulta recursiva acontece quando um servidor de nomes estabelece apenas uma conexão com um servidor de nomes e aguarda a tradução diretamente em seu nome. Por exemplo, um servidor de nomes local estabelece uma conexão com um servidor DNS raiz, o servidor raiz contacta um servidor DNS TLD e o servidor TLD contacta o servidor DNS com autoridade. Assim, como num processo de desempilhamento, o servidor DNS com autoridade responde ao servidor DNS TLD, que repassa ao servidor raiz e este repassa ao servidor de nomes local.
+
+## 14. No contexto do protocolo DNS, descreva os seguintes registros: A, NS, CNAME e MX.
+
+Os registros de recursos servem para o mapeamento de nome de hospedeiro para endereço IP. Cada registro contém 4 campos: `name`, `value`, `type`, `TTL`. O campo `TTL` serve para determinar o tempo de vida que um registro pode se manter em um cache. Esse campo será ignorado a seguir. 
+
+* registro `type=A` 
+  * `name`: indica um nome de hospedeiro.
+  * `value`: indica o endereço IP referente ao nome de hospedeiro.
+  * exemplo: (`website.com`, `1.1.1.1`, `A`).
+
+* registro `type=NS`
+  * `name`: indica um nome de hospedeiro.
+  * `value`: indica o nome de um servidor DNS com autoridade para o nome de hospedeiro.
+  * exemplo: (`website.com`, `dns.website.com`, `NS`).
+
+* registro `type=CNAME`
+  * `name`: indica o apelido de hospedeiro. 
+  * `value`: indica o nome canônico do apelido de hospedeiro. 
+  * exemplo: (`website.com`, `server1.website.com`, `CNAME`)
+
+* registro `type=MX`
+  * `name`: indica o apelido de um servidor de correio.
+  * `value`: indica o nome canônico do hospedeiro referente ao servidor de correio.
+  * exemplo: (`gmail.com`, `mail.gmail.com`, `MX`)
+
+## 15. Qual a importância de ter um servidor DNS “caching only” dentro de uma organização?
+
+Um servidor DNS "caching only" não possui autoridade sobre nenhum domínio, sua função é realizar consultas a outros servidores, armazenar os registros de mapeamento e retornar os resultados. É importante utilizar um servidor "caching only" dentro de uma organização para reduzir o tráfego na rede.
+
+## 16. Quais a diferenças entre as arquiteturas cliente-servidor e P2P?
+
+A arquitetura cliente-servidor é caracterizada por um hospedeiro com o processo servidor, sempre ligado, mantendo conexões com múltiplos hospedeiros com processos clientes. Por outro lado, a arquitetura P2P (peer-to-peer) é caracterizada por conexões diretas entre pares de hospedeiros. Assim, a principal diferença entre as arquiteturas é que a cliente-servidor é centralizada e a P2P é distribuída.
+
+## 17. Descreva os campos dos protocolos TCP e UDP.
+
+Alguns campos são comuns em ambos os protocolos:
+
+* **porta de origem**: indica a porta relacionada ao processo da aplicação de origem. 
+* **porta de destino**: indica a porta relacionada ao processo da aplicação de destino.
+* **dados de aplicação**: indica a mensagem encapsulada da aplicação (carga útil).
+
+Os campos específicos do UDP são:
+
+* **comprimento**: indica o tamanho total em bytes do segmento UDP, ou seja, o comprimento do cabeçalho mais o comprimento dos dados da aplicação.
+* **soma de verificação (*checksum*)**: utilizado para verificar se houve alguma modificação nos bits do segmento durante o transporte.
+
+Os campos específicos do TCP são:
+
+* **número de sequência**: indica o número do primeiro byte do segmento em relação ao conjunto total de dados a ser transportado em uma sessão TCP.
+* **número de reconhecimento (*acknowledgment*)**: indica o número do próximo byte esperado por um lado da conexão TCP. 
+* **opções**: indica os campos opcionais estabelecidos em uma conexão TCP.
+* **janela de recepção**: indica o tamanho máximo aceitável do segmento a ser transportado em um conexão TCP.
+* **campo de flag**: indica 6 bits de flags.
+* **ponteiro para dados urgentes**: indica o início de um possível conjunto de dados urgentes da aplicação.
+* **comprimento do cabeçalho**: indica o comprimento do cabeçalho do TCP, já que o campo de opções pode variar de tamanho.
