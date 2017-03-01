@@ -144,3 +144,16 @@ Os campos específicos do TCP são:
 * **campo de flag**: indica 6 bits de flags.
 * **ponteiro para dados urgentes**: indica o início de um possível conjunto de dados urgentes da aplicação.
 * **comprimento do cabeçalho**: indica o comprimento do cabeçalho do TCP, já que o campo de opções pode variar de tamanho.
+
+## 18. Qual a sequência de comandos trocados durante o início de uma conexão TCP?
+
+O protocolo TCP oferece um serviço orientado para a conexão, isto é, sempre que um processo cliente pretender iniciar uma conexão com um processo servidor, as camadas de transporte nos hospedeiros realizarão um procedimento de apresentação antes da troca de dados em si. O procedimento utilizado pelo TCP é conhecido como **apresentação de 3 vias**. 
+
+Suponha que uma aplicação no hospedeiro `A` deseja trocar mensagens com uma aplicação no hospedeiro `B`. Através de um `socket`, o processo de aplicação cliente, rodando no hospedeiro `A`, informa a sua camada de transporte que deseja se conectar com o processo de aplicação `B`, especificado pela porta, que está no hospedeiro `B`, identificado pelo nome de servidor. A sequência de apresentação pode ser descrita como:
+
+1. A camada de transporte em `A` (cliente) envia um segmento TCP especial, sem nenhuma carga útil, para a camada de transporte em `B` (servidor) indicando que pretende estabelecer uma conexão entre o processo cliente em `A` e o processo servidor em `B`. O segmento enviado nessa etapa carrega o bit da flag `SYN` em 1, por isso ele é conhecido como segmento `SYN`.  
+
+2. Em seguida, o servidor opta por aceitar a conexão, aloca os seus recursos (variáveis e buffers) e retorna um segmento TCP especial, também sem carga útil, informando que a conexão pode ser estabelecida. O segmento nessa etapa carrega o bit da flag `SYN` em 1 e um `número de reconhecimento`, por isso ele é conhecido como segmento `SYNACK`.
+
+3. Por último, após receber a resposta positiva (`SYNACK`) do servidor, o cliente também aloca os seus recursos para a conexão e envia um novo segmento TCP especial, podendo conter alguma carga útil, indicando que irá iniciar a troca de dados.
+
