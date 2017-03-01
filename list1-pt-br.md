@@ -157,3 +157,10 @@ Suponha que uma aplicação no hospedeiro `A` deseja trocar mensagens com uma ap
 
 3. Por último, após receber a resposta positiva (`SYNACK`) do servidor, o cliente também aloca os seus recursos para a conexão e envia um novo segmento TCP especial, podendo conter alguma carga útil, indicando que irá iniciar a troca de dados.
 
+## 19. Quais os tipos de términos de conexão TCP que existem?
+
+Existem 2 tipos de términos de conexão TCP: **normal** e **abrupto**. 
+
+O término **normal** é caracterizado pela formalidade entre os dois lados da conexão e pode ser iniciado por qualquer um deles. O lado cliente (aquele que pretende finalizar a conexão) envia um segmento TCP com a flag `FIN` em 1, indicando que deseja encerrar a conexão no seu lado. Em seguida, após receber o segmento `FIN`, o lado servidor responde um segmento com a flag `ACK` em 1, indicando que a conexão pode ser finalizada para aquele lado e agora os dados não fluem mais do cliente para o servidor. Caso o lado servidor também deseje encerrar a troca de dados, ele envia um segmento TCP com a flag `FIN` em 1 para o cliente. O cliente recebe o segmento `FIN` do servidor e responde com um segmento `ACK`, reconhecendo o fim da conexão em ambos os lados. Nesse momento, todos os recursos (variáveis e buffers) de conexão estão liberados.
+
+Por outro lado, o término **abrupto** é caracterizado pela informalidade. Esse tipo de término acontece em decorrência de algum evento não esperado que interrompe a conexão TCP, podendo causar perda de dados entre os dois lados.
