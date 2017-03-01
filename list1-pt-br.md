@@ -164,3 +164,30 @@ Existem 2 tipos de términos de conexão TCP: **normal** e **abrupto**.
 O término **normal** é caracterizado pela formalidade entre os dois lados da conexão e pode ser iniciado por qualquer um deles. O lado cliente (aquele que pretende finalizar a conexão) envia um segmento TCP com a flag `FIN` em 1, indicando que deseja encerrar a conexão no seu lado. Em seguida, após receber o segmento `FIN`, o lado servidor responde um segmento com a flag `ACK` em 1, indicando que a conexão pode ser finalizada para aquele lado e agora os dados não fluem mais do cliente para o servidor. Caso o lado servidor também deseje encerrar a troca de dados, ele envia um segmento TCP com a flag `FIN` em 1 para o cliente. O cliente recebe o segmento `FIN` do servidor e responde com um segmento `ACK`, reconhecendo o fim da conexão em ambos os lados. Nesse momento, todos os recursos (variáveis e buffers) de conexão estão liberados.
 
 Por outro lado, o término **abrupto** é caracterizado pela informalidade. Esse tipo de término acontece em decorrência de algum evento não esperado que interrompe a conexão TCP, podendo causar perda de dados entre os dois lados.
+
+## 20. Como o TCP trabalha para entregar à camada de aplicação os pacotes ordenados?
+
+Para entregar à camada de aplicação os pacotes ordenados, o TCP utiliza os campos de **número de sequência** e **número de reconhecimento**.
+
+O TCP fragmenta uma cadeia de dados a ser enviada em múltiplos segmentos de tamanho definido. Para saber a ordem de cada segmento, o TCP não distribue um número identificador relativo a série de segmentos mas utiliza o número do primeiro byte do segmento em relação a cadeia de dados a ser enviada. O campo de **número de sequência** serve justamente para isso. Suponha que uma mensagem de `5000 bytes` precise ser transportada e que o TCP a fragmente em 5 segmentos de `1000 bytes`. Logo, o **número de sequência** do primero segmento será `0`, do segundo `1000`, do terceiro `2000` e assim por diante.
+
+O campo de **número de reconhecimento** complementa o serviço de entrega confiável de dados do TCP e auxilia na identificação de segmentos fora de ordem. Ele carrega o valor do próximo byte esperado por um lado da conexão TCP. Uma conexão TCP é *full-duplex*, ou seja, os dados podem fluir de um hospedeiro `A` para um hospedeiro `B` e de `B` para `A` simultaneamente. Assim, dizemos que o **número de reconhecimento** do hospedeiro `A` é o próximo byte a ser enviado pelo hospedeiro `B` e vice versa. 
+
+Suponha que 5 segmentos de `1000 bytes` precisem ser entregues ao hospedeiro `B`, onde o primeiro encontra-se transmitido. Logo, o **número de reconhecimento** no hospedeiro `B` é `1001`, já que ele espera que o hospedeiro `A` envie os bytes a partir deste ponto. É possível que o hospedeiro `B` receba os bytes de `2001` a `3000` antes de `1001` a `2000`, mantendo a cadeia de dados desordenada. Nesse ponto, o TCP no lado de `B` tem duas opções para tratar a situação:
+  1. Descartar os pacotes de dados fora de ordem e continuar esperando pelo próximo byte indicado no campo de **número de reconhecimento**.
+  2. Alocar os pacotes de dados desordenados em uma estrutura de dados separada e, assim que os bytes esperados chegarem, realizar uma ordenação na cadeia de dados.
+
+## 21. Cite algumas aplicações adequadas ao TCP e UDP? Descreva o porquê de citá-las.
+
+As aplicações que requerem um serviço orientado para conexão, com entrega confiável de dados, controle de fluxo e congestionamento são adequadas ao TCP. Alguns exemplos são:
+  * Web (HTTP)
+  * E-mail (SMTP)
+  * Transferência de arquivos (FTP)
+
+Já as aplicações que não requerem um serviço orientado para conexão, com tolerância a certa perda de dados, sem controle de fluxo e congestionamento para maior agilidade na troca de pacotes são adequadas ao UDP. Alguns exemplos são:
+  * *Streaming* de vídeo e áudio (protocolo de aplicação geralmente proprietário)
+  * Tradução de nomes (DNS)
+
+## 22. O que é um servidor DNS de autoridade?
+
+O servidor DNS de autoridade é um servidor de acesso público que mantém o mapeamento de seus nomes de hospedeiros para endereços IP. Esse tipo de servidor é consultado sempre que algum cliente/servidor DNS deseja realizar a tradução de um nome de hospedeiro contido em seus registros. Geralmente, cada organização possui um (ou mais) servidor de autoridade. Outra possibilidade é o contrato de um provedor para esse serviço.
