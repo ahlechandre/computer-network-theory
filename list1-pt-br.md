@@ -191,3 +191,24 @@ Já as aplicações que não requerem um serviço orientado para conexão, com t
 ## 22. O que é um servidor DNS de autoridade?
 
 O servidor DNS de autoridade é um servidor de acesso público que mantém o mapeamento de seus nomes de hospedeiros para endereços IP. Esse tipo de servidor é consultado sempre que algum cliente/servidor DNS deseja realizar a tradução de um nome de hospedeiro contido em seus registros. Geralmente, cada organização possui um (ou mais) servidor de autoridade. Outra possibilidade é o contrato de um provedor para esse serviço.
+
+## 23. Ao tentar acessar um site, liste quais são as interações entre as camadas (aplicação, transporte e rede) e todos os protocolos envolvidos na comunicação até que o conteúdo do site seja exibido no browser.
+
+A **camada de aplicação** abriga as aplicações de rede e seus protocolos. A Web é uma delas e seu protocolo é o HTTP. Ao tentar acessar um website, o usuário utiliza um processo de aplicação cliente HTTP (Web browser) para trocar mensagens com um processo de aplicação servidor HTTP (Web server). Essas mensagens são requisições (cliente) e respostas (servidor) HTTP, contendo dados de cabeçalho e a carga útil. Para requisitar uma página Web, o browser monta uma requisitação HTTP do tipo GET. Por exemplo:
+
+```
+GET HTTP/1.1
+Host: github.com
+```
+
+Para que essa requisição seja enviada, o processo cliente HTTP informa a sua **camada de transporte** que precisa estabelecer uma conexão TCP com o processo servidor HTTP, identificado por um **nome de hospedeiro** e uma **porta**. Esse procedimento só é possível graças ao `socket` que provê uma interface entre os processos de aplicação e a camada de transporte.
+
+Como os protocolos das camadas subjacentes não trabalham com nomes de hospedeiros, a camada de aplicação precisa traduzir este para endereço IP antes de passar a mensagem para baixo na pilha. Para isso existe o sistema de nomes de domínio (DNS). Intermediado pelo Sistema Operacional, o browser solicita ao cliente DNS local o endereço IP do hospedeiro servidor. O cliente DNS, por sua vez, estabelece uma conexão UDP com o servidor DNS local e realiza uma consulta recursiva, aguardando a resposta em seu nome. Assim, o servidor DNS local consulta um servidor de nomes raiz, TLD e com autoridade. O último responde com segmento UDP contendo um registro do tipo `A` que mapeia o nome de hospedeiro para endereço IP, por exemplo (`github.com`, `100.100.10.1`, `A`). Ao final da consulta, o servidor DNS local repassa o endereço IP para o cliente DNS e este retorna ao browser.
+
+Com o endereço IP e porta de destino, a camada de transporte do cliente está pronta para iniciar o procedimento de apresentação de 3 vias do protocolo TCP para conectar os processos. Após estabelecida a conexão, o TCP cliente fragmenta a mensagem da aplicação (a requisição HTTP) em diversos segmentos TCP de tamanho máximo definido. Cada segmento possui uma cadeia de bytes da mensagem no campo de carga útil e os seus próprios campos de cabeçalho.
+
+A camada de transporte cliente passa cada um de seus segmentos junto com o endereço IP do hospedeiro servidor para a **camada de rede** que se encarrega de os enviar até lá. Para isso, a camada de rede cliente encapsula o segmento TCP a ser entregue em um campo de carga útil e adiciona os seus próprios campos de cabeçalho, tais como o **endereço IP de origem** e o **endereço IP de destino**, em um pacote de dados denominado datagrama IP. Após realizar esse procedimento, os datagramas são enviados pela Internet para o hospedeiro de destino.
+
+Conforme os datagramas IP chegam na camada de rede do servidor, os segmentos TCP são extraídos e entregues à camada de transporte do servidor. Essa, por sua vez, extrai a mensagem de aplicação e a entrega, através de um socket, ao processo servidor HTTP. O Web server processa a requisição e encaminha uma resposta HTTP ao cliente, contendo tipicamente um código de status e o conteúdo requisitado. Essa mensagem de aplicação do servidor é passada para sua camada de transporte que a encapsula em segmentos, repassa a sua camada de rede que monta os datagramas IP e envia todos os dados para o hospedeiro cliente.
+
+Os datagramas IP vindos do servidor chegam a camada de rede do cliente. Os segmentos são extraídos e entregues a camada de transporte, que extrai a mensagem de aplicação e repassa para o processo cliente HTTP. Assim, o browser processa o cabeçalho da resposta HTTP e renderiza o seu conteúdo.
